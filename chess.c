@@ -1,6 +1,11 @@
+// Headers
 #include <stdio.h>
 
-// Piece enconding
+// FEN debug positions
+char start_position[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+char tricky_position[] = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
+// Piece encoding
 enum {e, P, N, B, R, Q, K, p, n, b, r, q, k, o};
 
 // Square encoding
@@ -21,7 +26,7 @@ char ascii_pieces[] = ".PNBRQKpnbrqko";
 // Unicode pieces
 char *unicode_pieces[] = {".", "&#9817", "U+2658", "U+2657", "U+2656", "U+2655", "U+2654", "U+265F", "U+265E", "U+265D", "U+265C", "U+265B", "U+265A"};
 
-// Encode ASCII pieces
+// Encode ASCII pieces (itoa)
 int char_pieces[] = {
 	['P'] = P,
 	['N'] = N,
@@ -80,28 +85,104 @@ void print_board()
 			square = lin * 16 + col;
 			//print line digits
 			if (col == 0)
-				printf(" %d--", lin_digit--);
-			//remove the offboard square
+				printf(" %d  ", lin_digit--);
+			//if square is on board
 			if ((square & 0x88) == 0)
 				printf("%c ", ascii_pieces[board[square]]);
-				//printf("%s ", unicode_pieces[board[square]]);
+			//printf("%s ", unicode_pieces[board[square]]);
 			col++;
 		}
 		printf("\n");
 		lin++;
 	}
-	printf("    | | | | | | | |");
 	printf("\n");
 	// print column alphas
 	printf("    a b c d e f g h");
 	printf("\n\n");
 }
 
+// Reset board
+void reset_board()
+{
+	int col;
+	int lin;
+	int square;
+
+	lin = 0;
+	while (lin < 8)
+	{
+		col = 0;
+		while (col < 16)
+		{
+			//init big square
+			square = lin * 16 + col;
+			//if square is on board
+			if ((square & 0x88) == 0)
+				board[square] = e;
+			col++;
+		}
+		lin++;
+	}
+}
+
+// Parse FEN
+void parse_fen(char *fen)
+{
+	int col;
+	int lin;
+	int square;
+	int offset;
+
+
+	// reset board
+	reset_board();
+	lin = 0;
+	while (lin < 8)
+	{
+		col = 0;
+		while (col < 16)
+		{
+			// init big square
+			square = lin * 16 + col;
+			// if square is on board
+			if ((square & 0x88) == 0)
+			{
+				// match pîeces
+				if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z'))
+				{
+					// set the piece on board
+					board[square] = char_pieces[*fen];
+					// increment FEN pointer
+					*fen++;
+				}
+				// match empty squares
+				if (*fen >= '0' && *fen <= '9')
+				{
+					// calculate offset
+					offset = *fen - '0';
+					// decrement col on empty squares
+					if (!(board[square]))
+						col--;
+					// skip empty squares
+					col = col + offset;
+					// increment FEN pointer
+					*fen++;
+				}
+				// match end of line : /
+				if (*fen == '/')
+					// increment FEN pointer
+					*fen++;
+			}
+			col++;
+		}
+		lin++;
+	}
+}
+
 // main function
 int main()
 {
-	board[e2] = e;
-	board[e4] = P;
+	parse_fen(tricky_position);
 	print_board();
 	return (0);
 }
