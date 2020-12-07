@@ -182,7 +182,7 @@ void parse_fen(char *fen)
 // main function
 int main()
 {
-	parse_fen(tricky_position);
+	parse_fen(start_position);
 	print_board();
 	return (0);
 }
